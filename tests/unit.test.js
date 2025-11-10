@@ -176,7 +176,12 @@ describe('Edge cases', () => {
     `;
     
     const modifiedHtml = replaceYaleWithFale(html);
-    expect(modifiedHtml).toContain('<title>Empty Page</title>');
-    expect(modifiedHtml).toContain('<body></body>');
+    const $ = cheerio.load(modifiedHtml);
+    
+    expect($('title').text()).toBe('Empty Page');
+    // Check that body exists and is effectively empty (may have whitespace)
+    expect($('body').length).toBe(1);
+    expect($('body').children().length).toBe(0);
+    expect($('body').text().trim()).toBe('');
   });
 });
