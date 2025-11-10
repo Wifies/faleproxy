@@ -1,3 +1,11 @@
+/**
+ * Integration Tests
+ * 
+ * NOTE: This file should be run with --runInBand flag to avoid
+ * Jest worker serialization issues with child processes.
+ * See package.json jest config.
+ */
+
 const axios = require('axios');
 const cheerio = require('cheerio');
 const { exec } = require('child_process');
@@ -69,11 +77,16 @@ describe('Integration Tests', () => {
       url: 'https://example.com/'
     });
     
-    expect(response.status).toBe(200);
-    expect(response.data.success).toBe(true);
+    // Extract only the data we need to avoid circular references
+    const status = response.status;
+    const success = response.data.success;
+    const content = response.data.content;
+    
+    expect(status).toBe(200);
+    expect(success).toBe(true);
     
     // Verify Yale has been replaced with Fale in text
-    const $ = cheerio.load(response.data.content);
+    const $ = cheerio.load(content);
     expect($('title').text()).toBe('Fale University Test Page');
     expect($('h1').text()).toBe('Welcome to Fale University');
     expect($('p').first().text()).toContain('Fale University is a private');
@@ -94,6 +107,7 @@ describe('Integration Tests', () => {
   }, 10000); // Increase timeout for this test
 
   test('Should handle invalid URLs', async () => {
+    let errorStatus;
     try {
       await axios.post(`http://localhost:${TEST_PORT}/fetch`, {
         url: 'not-a-valid-url'
@@ -101,18 +115,23 @@ describe('Integration Tests', () => {
       // Should not reach here
       expect(true).toBe(false);
     } catch (error) {
-      expect(error.response.status).toBe(500);
+      errorStatus = error.response.status;
     }
+    expect(errorStatus).toBe(500);
   });
 
   test('Should handle missing URL parameter', async () => {
+    let errorStatus;
+    let errorMessage;
     try {
       await axios.post(`http://localhost:${TEST_PORT}/fetch`, {});
       // Should not reach here
       expect(true).toBe(false);
     } catch (error) {
-      expect(error.response.status).toBe(400);
-      expect(error.response.data.error).toBe('URL is required');
+      errorStatus = error.response.status;
+      errorMessage = error.response.data.error;
     }
+    expect(errorStatus).toBe(400);
+    expect(errorMessage).toBe('URL is required');
   });
 });
