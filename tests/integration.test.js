@@ -23,7 +23,8 @@ describe('Integration Tests', () => {
   beforeAll(async () => {
     // Mock external HTTP requests
     nock.disableNetConnect();
-    nock.enableNetConnect('127.0.0.1');
+    // Allow localhost connections on any port for the test server
+    nock.enableNetConnect(host => host.includes('127.0.0.1') || host.includes('localhost'));
     
     // Create a temporary test app file
     await execAsync('cp app.js app.test.js');
@@ -43,8 +44,8 @@ describe('Integration Tests', () => {
     server.unref();
     
     // Give the server time to start
-    await new Promise(resolve => setTimeout(resolve, 2000));
-  }, 10000); // Increase timeout for server startup
+    await new Promise(resolve => setTimeout(resolve, 3000));
+  }, 15000); // Increase timeout for server startup
 
   afterAll(async () => {
     // Kill the test server and clean up
@@ -115,7 +116,7 @@ describe('Integration Tests', () => {
       // Should not reach here
       expect(true).toBe(false);
     } catch (error) {
-      errorStatus = error.response.status;
+      errorStatus = error.response ? error.response.status : error.code;
     }
     expect(errorStatus).toBe(500);
   });
@@ -128,8 +129,12 @@ describe('Integration Tests', () => {
       // Should not reach here
       expect(true).toBe(false);
     } catch (error) {
-      errorStatus = error.response.status;
-      errorMessage = error.response.data.error;
+      if (error.response) {
+        errorStatus = error.response.status;
+        errorMessage = error.response.data.error;
+      } else {
+        throw error; // Re-throw if it's a connection error
+      }
     }
     expect(errorStatus).toBe(400);
     expect(errorMessage).toBe('URL is required');
