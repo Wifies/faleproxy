@@ -2,7 +2,6 @@ const express = require('express');
 const axios = require('axios');
 const cheerio = require('cheerio');
 const path = require('path');
-
 const app = express();
 const PORT = 3001;
 
@@ -28,24 +27,9 @@ app.post('/fetch', async (req, res) => {
     // Fetch the content from the provided URL
     const response = await axios.get(url);
     const html = response.data;
-
+    
     // Use cheerio to parse HTML and selectively replace text content, not URLs
     const $ = cheerio.load(html);
-    
-    // Function to replace text but skip URLs and attributes
-    function replaceYaleWithFale(i, el) {
-      if ($(el).children().length === 0 || $(el).text().trim() !== '') {
-        // Get the HTML content of the element
-        let content = $(el).html();
-        
-        // Only process if it's a text node
-        if (content && $(el).children().length === 0) {
-          // Replace Yale with Fale in text content only
-          content = content.replace(/Yale/g, 'Fale').replace(/yale/g, 'fale').replace(/YALE/g, 'FALE'); // Change 1
-          $(el).html(content);
-        }
-      }
-    }
     
     // Process text nodes in the body
     $('body *').contents().filter(function() {
@@ -81,3 +65,5 @@ app.post('/fetch', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Faleproxy server running at http://localhost:${PORT}`);
 });
+
+module.exports = app;

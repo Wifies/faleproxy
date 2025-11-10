@@ -33,14 +33,14 @@ testApp.post('/fetch', async (req, res) => {
     }).each(function() {
       // Replace text content but not in URLs or attributes
       const text = $(this).text();
-      const newText = text.replace(/Yale/g, 'Fale').replace(/yale/g, 'fale');
+      const newText = text.replace(/Yale/g, 'Fale').replace(/yale/g, 'fale').replace(/YALE/g, 'FALE');
       if (text !== newText) {
         $(this).replaceWith(newText);
       }
     });
     
     // Process title separately
-    const title = $('title').text().replace(/Yale/g, 'Fale').replace(/yale/g, 'fale');
+    const title = $('title').text().replace(/Yale/g, 'Fale').replace(/yale/g, 'fale').replace(/YALE/g, 'FALE');
     $('title').text(title);
     
     return res.json({ 
@@ -79,7 +79,7 @@ describe('API Endpoints', () => {
     const response = await request(testApp)
       .post('/fetch')
       .send({});
-
+    
     expect(response.statusCode).toBe(400);
     expect(response.body.error).toBe('URL is required');
   });
@@ -93,7 +93,7 @@ describe('API Endpoints', () => {
     const response = await request(testApp)
       .post('/fetch')
       .send({ url: 'https://example.com/' });
-
+    
     expect(response.statusCode).toBe(200);
     expect(response.body.success).toBe(true);
     expect(response.body.title).toBe('Fale University Test Page');
@@ -111,7 +111,7 @@ describe('API Endpoints', () => {
     const response = await request(testApp)
       .post('/fetch')
       .send({ url: 'https://error-site.com/' });
-
+    
     expect(response.statusCode).toBe(500);
     expect(response.body.error).toContain('Failed to fetch content');
   });
